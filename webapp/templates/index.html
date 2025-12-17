@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>在线视频音乐识别 | Video Music Recognizer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg-color: #f3f4f6;
+            --card-bg: #ffffff;
+            --text-main: #111827;
+            --text-secondary: #6b7280;
+            --border-color: #e5e7eb;
+            --success-color: #10b981;
+            --error-color: #ef4444;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            line-height: 1.5;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .container {
+            background: var(--card-bg);
+            width: 100%;
+            max-width: 800px;
+            border-radius: 16px;
+            box-shadow: var(--shadow-lg);
+            padding: 40px;
+            margin-top: 20px;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--text-main);
+            margin: 0 0 10px 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        h1 span {
+            background: linear-gradient(135deg, #4f46e5 0%, #8b5cf6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        /* Form Styles */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text-main);
+        }
+
+        input[type="text"], input[type="url"] {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 15px;
+            transition: all 0.2s;
+            background: #f9fafb;
+            box-sizing: border-box;
+        }
+
+        input[type="text"]:focus, input[type="url"]:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 30px;
+        }
+
+        button {
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+            flex: 1;
+            box-shadow: 0 4px 6px rgba(79, 70, 229, 0.2);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 8px rgba(79, 70, 229, 0.3);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: #f9fafb;
+            color: var(--text-main);
+            border-color: #d1d5db;
+        }
+
+        /* Advanced Config */
+        details {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+            background: #fff;
+        }
+
+        summary {
+            padding: 12px 16px;
+            cursor: pointer;
+            background: #f9fafb;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            list-style: none;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: background 0.2s;
+        }
+        
+        summary::-webkit-details-marker {
+            display: none;
+        }
+
+        summary::after {
+            content: '+';
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        details[open] summary::after {
+            content: '-';
+        }
+
+        details[open] summary {
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .config-content {
+            padding: 20px;
+            background: #fff;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .config-content .form-group {
+            margin-bottom: 0;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        /* Results */
+        .result-section {
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 1px solid var(--border-color);
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        h2 {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--text-main);
+        }
+
+        .track-card {
+            background: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .track-card::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: var(--success-color);
+        }
+
+        .track-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .track-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .track-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin: 0;
+        }
+
+        .track-artist {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .track-meta {
+            display: inline-flex;
+            align-items: center;
+            background: #ecfdf5;
+            color: #059669;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .netease-section {
+            background: #f9fafb;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-top: 16px;
+        }
+
+        .netease-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .netease-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .netease-list li {
+            font-size: 13px;
+            color: var(--text-main);
+            padding: 6px 0;
+            border-bottom: 1px dashed var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .netease-list li:last-child {
+            border-bottom: none;
+        }
+
+        .netease-icon {
+            width: 16px;
+            height: 16px;
+            background: #ef4444;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 10px;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        /* Debug & Error */
+        .error {
+            background: #fef2f2;
+            border: 1px solid #fee2e2;
+            color: #b91c1c;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .debug-details {
+            margin-top: 30px;
+            border: none;
+            background: transparent;
+        }
+
+        .debug-details summary {
+            background: transparent;
+            padding: 0;
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+        
+        .debug-details[open] summary {
+            border-bottom: none;
+            margin-bottom: 10px;
+        }
+
+        .debug-info {
+            background: #1f2937;
+            color: #e5e7eb;
+            padding: 16px;
+            border-radius: 8px;
+            font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .debug-textarea {
+            width: 100%;
+            height: 300px;
+            background: #111827;
+            color: #10b981;
+            border: 1px solid #374151;
+            border-radius: 4px;
+            padding: 12px;
+            font-family: inherit;
+            font-size: inherit;
+            resize: vertical;
+            margin-top: 10px;
+        }
+
+        /* Loading */
+        #loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #e5e7eb;
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    </style>
+</head>
+<body>
+    <div id="loading-overlay">
+        <div class="spinner"></div>
+        <div style="font-size: 18px; font-weight: 600; color: var(--text-main);">正在识别中，请稍候...</div>
+        <div style="font-size: 14px; color: var(--text-secondary); margin-top: 8px;">
+            <span style="display:inline-block; margin:0 5px;">🎥 下载视频</span>→
+            <span style="display:inline-block; margin:0 5px;">🎵 提取音频</span>→
+            <span style="display:inline-block; margin:0 5px;">🔍 切片识别</span>→
+            <span style="display:inline-block; margin:0 5px;">☁️ 搜索网易云</span>
+        </div>
+    </div>
+
+    <div class="container">
+        <h1><span>🎵</span> 在线视频音乐识别</h1>
+        <div class="subtitle">自动下载视频、提取音频、切片识别 BGM，并匹配网易云音乐链接。</div>
+        
+        {% if error %}
+        <div class="error">
+            <svg style="width:20px;height:20px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <div>{{ error }}</div>
+        </div>
+        {% endif %}
+
+        <form method="post">
+            <div class="form-group">
+                <label>视频网址 (必填)</label>
+                <input type="url" name="url" placeholder="https://www.bilibili.com/video/..." required autocomplete="off">
+            </div>
+            
+            <details>
+                <summary>高级配置 (ACRCloud / NetEase / Cookies)</summary>
+                <div class="config-content">
+                    <div class="form-group">
+                        <label>ACR Host</label>
+                        <input type="text" name="acr_host" value="{{ config.ACR_HOST }}" placeholder="identify-cn-north-1.acrcloud.cn">
+                    </div>
+                    <div class="form-group">
+                        <label>ACR Access Key</label>
+                        <input type="text" name="acr_key" value="{{ config.ACR_ACCESS_KEY }}">
+                    </div>
+                    <div class="form-group full-width">
+                        <label>ACR Secret</label>
+                        <input type="text" name="acr_secret" value="{{ config.ACR_ACCESS_SECRET }}">
+                    </div>
+                    <div class="form-group full-width">
+                        <label>Cookies 路径 (可选，用于会员视频)</label>
+                        <input type="text" name="cookies_path" value="{{ config.COOKIES_PATH }}" placeholder="~/Downloads/cookies.txt">
+                    </div>
+                    <div class="form-group">
+                        <label>HTTP 代理 (解决下载失败问题)</label>
+                        <input type="text" name="proxy" placeholder="http://127.0.0.1:7890">
+                    </div>
+                    <div class="form-group">
+                        <label>网易云 API 地址</label>
+                        <input type="text" name="netease_api" value="{{ config.NETEASE_API }}">
+                    </div>
+                </div>
+            </details>
+            
+            <div class="btn-group">
+                <button type="submit" class="btn-primary">
+                    <svg style="width:18px;height:18px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    开始识别
+                </button>
+                <button type="button" onclick="window.location.href=window.location.href" class="btn-secondary">
+                    <svg style="width:18px;height:18px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                    重置
+                </button>
+            </div>
+        </form>
+
+        {% if result %}
+        <div class="result-section">
+            <h2>识别结果 ({{ result.tracks_found|length }} 首)</h2>
+            
+            {% if result.tracks_found %}
+                {% for track in result.tracks_found %}
+                <div class="track-card">
+                    <div class="track-header">
+                        <div>
+                            <div class="track-title">{{ track.title }}</div>
+                            <div class="track-artist">{{ track.artist }}</div>
+                        </div>
+                        <div class="track-meta">
+                            <svg style="width:12px;height:12px;margin-right:4px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            {{ track.timestamp }} (置信度: {{ track.score }})
+                        </div>
+                    </div>
+                    
+                    {% if track.netease_matches %}
+                        <div class="netease-section">
+                            <span class="netease-label">网易云音乐匹配</span>
+                            <ul class="netease-list">
+                                {% for match in track.netease_matches %}
+                                <li>
+                                    <span class="netease-icon">N</span>
+                                    <span><strong>{{ match.name }}</strong> - {{ match.artists }} <span style="color:#9ca3af; font-size:12px;">({{ match.album }})</span></span>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% else %}
+                        <div style="font-size: 13px; color: var(--text-secondary); margin-top: 10px; font-style: italic;">
+                            暂无网易云匹配结果
+                        </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            {% else %}
+                <div style="text-align:center; padding: 40px; color: var(--text-secondary); background: #f9fafb; border-radius: 8px;">
+                    <svg style="width:40px;height:40px;margin-bottom:10px;color:#d1d5db" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <p>很抱歉，未能识别到任何歌曲。</p>
+                </div>
+            {% endif %}
+
+            <details class="debug-details">
+                <summary>查看详细调试日志 (Debug Log)</summary>
+                <div class="debug-info">
+                    <div style="margin-bottom: 10px;">
+                        <strong>下载信息:</strong> {{ result.download_info }} | 
+                        <strong>处理分段:</strong> {{ result.segments_processed }}
+                    </div>
+                    <strong>诊断日志:</strong>
+                    <textarea class="debug-textarea" readonly>{{ result.debug_log | join('\n') }}</textarea>
+                </div>
+            </details>
+        </div>
+        {% endif %}
+    </div>
+    <script>
+        document.querySelector('form').addEventListener('submit', function() {
+            document.getElementById('loading-overlay').style.display = 'flex';
+        });
+    </script>
+</body>
+</html>
