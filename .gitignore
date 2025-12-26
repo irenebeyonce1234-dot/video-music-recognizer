@@ -1,0 +1,16 @@
+__pycache__/
+*.py[cod]
+*$py.class
+.env
+.venv
+env/
+venv/
+*.mp3
+*.wav
+cookies.txt
+.DS_Store
+.idea/
+.vscode/
+dist/
+build/
+*.egg-info/
