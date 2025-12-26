@@ -23,4 +23,5 @@ ENV PORT=8000
 EXPOSE 8000
 
 # Run the application using Gunicorn
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--timeout", "120", "webapp.app:app"]
+# Use sh -c to expand the PORT environment variable provided by Render
+CMD sh -c "gunicorn --bind 0.0.0.0:${PORT:-8000} --timeout 120 webapp.app:app"
