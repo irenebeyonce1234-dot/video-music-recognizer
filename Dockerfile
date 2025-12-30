@@ -17,11 +17,11 @@ COPY . .
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
-ENV PORT=8000
+ENV PORT=7860
 
 # Expose the port
-EXPOSE 8000
+EXPOSE 7860
 
 # Run the application using Gunicorn
-# Use sh -c to expand the PORT environment variable provided by Render
-CMD sh -c "gunicorn --bind 0.0.0.0:${PORT:-8000} --timeout 120 webapp.app:app"
+# Hugging Face Spaces requires port 7860
+CMD ["gunicorn", "--bind", "0.0.0.0:7860", "--timeout", "600", "webapp.app:app"]
