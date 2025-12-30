@@ -434,7 +434,7 @@
         </div>
         {% endif %}
 
-        <form id="recognize-form">
+        <form id="recognize-form" method="POST" action="/result">
             <div class="form-group">
                 <label>视频网址 (必填)</label>
                 <input type="url" name="url" placeholder="https://www.bilibili.com/video/..." required autocomplete="off">
