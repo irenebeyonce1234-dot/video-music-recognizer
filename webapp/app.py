@@ -16,14 +16,11 @@ JOBS = {}
 # Helper to get env vars
 def get_config():
     return {
-           # --- 请修改以下三行 ---
-        "ACR_HOST": "identify-cn-north-1.acrcloud.cn",  # 这里的地址可能需要根据您实际的改
-        "ACR_ACCESS_KEY": "您的AccessKey",
-        "ACR_ACCESS_SECRET": "您的SecretKey",
-        # -------------------
-
+        "ACR_HOST": os.environ.get("ACR_HOST", ""),
+        "ACR_ACCESS_KEY": os.environ.get("ACR_ACCESS_KEY", ""),
+        "ACR_ACCESS_SECRET": os.environ.get("ACR_ACCESS_SECRET", ""),
         "NETEASE_API": os.environ.get("NETEASE_API_BASE", "http://localhost:3000"),
-        "COOKIES_PATH": os.environ.get("YTDLP_COOKIEFILE", "")   
+        "COOKIES_PATH": os.environ.get("YTDLP_COOKIEFILE", "")
     }
 
 def process_task(job_id, video_url, config_overrides):
