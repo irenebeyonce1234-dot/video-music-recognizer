@@ -78,13 +78,17 @@ def index():
 
 @app.route('/result', methods=['POST'])
 def handle_form_submit():
-    # Legacy synchronous fallback OR redirect to async flow
-    # Since we are moving to async, let's make this endpoint start the task and return the page with job_id
+    # Allow overriding config from form
     config = get_config()
-    data = request.form
+    
+    # Handle both JSON and Form data
+    if request.is_json:
+        data = request.get_json()
+    else:
+        data = request.form
+
     video_url = data.get('url', '').strip()
     
-    # Allow overriding config from form
     acr_host = data.get('acr_host', '').strip() or config["ACR_HOST"]
     acr_key = data.get('acr_key', '').strip() or config["ACR_ACCESS_KEY"]
     acr_secret = data.get('acr_secret', '').strip() or config["ACR_ACCESS_SECRET"]
@@ -93,9 +97,9 @@ def handle_form_submit():
     proxy = data.get('proxy', '').strip()
 
     if not video_url:
-        return render_template('index.html', error="请输入视频网址", config=config)
+        return jsonify({"status": "error", "message": "请输入视频网址"}), 400
     elif not (acr_host and acr_key and acr_secret):
-        return render_template('index.html', error="请配置 ACRCloud 凭据", config=config)
+        return jsonify({"status": "error", "message": "请配置 ACRCloud 凭据 (Host/Key/Secret)"}), 400
 
     job_id = str(uuid.uuid4())
     JOBS[job_id] = {
@@ -116,8 +120,11 @@ def handle_form_submit():
     thread.daemon = True
     thread.start()
 
-    # Redirect to index with job_id to trigger polling view
-    return redirect(url_for('index', job_id=job_id))
+    return jsonify({
+        "status": "success",
+        "job_id": job_id,
+        "redirect_url": url_for('index', job_id=job_id)
+    })
 
 @app.route('/api/status/<job_id>', methods=['GET'])
 def check_status(job_id):

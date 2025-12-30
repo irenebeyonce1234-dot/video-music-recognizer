@@ -559,8 +559,27 @@
         const form = document.getElementById('recognize-form');
         const overlay = document.getElementById('loading-overlay');
         const timerDiv = document.getElementById('loading-timer');
+        const toastContainer = document.getElementById('toast-container');
         let startTime;
         let timerInterval;
+
+        function showToast(title, message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                <div class="toast-content">
+                    <div class="toast-title">${title}</div>
+                    <div class="toast-message">${message}</div>
+                </div>
+            `;
+            toastContainer.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100%)';
+                toast.style.transition = 'all 0.3s ease-in';
+                setTimeout(() => toast.remove(), 300);
+            }, 5000);
+        }
 
         // Auto-refresh logic for polling
         {% if job_id %}
@@ -568,33 +587,30 @@
         const pollStatus = async () => {
             try {
                 const res = await fetch(`/api/status/${jobId}`);
+                if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+                
                 const data = await res.json();
                 
-                if (data.status === 'done' || data.status === 'error') {
-                    // Task finished, reload page to show results
+                if (data.status === 'done') {
                     window.location.href = `/?job_id=${jobId}`;
+                } else if (data.status === 'error') {
+                    window.location.href = `/?job_id=${jobId}`; // Reload to show error block
                 } else {
-                    // Still processing, update timer if needed
-                    // But wait, if we are in this block, it means the page already loaded with job_id.
-                    // If result is present, status is done.
-                    // If result is NOT present (which means we are in the polling state), show overlay.
                     {% if not result and not error %}
                         overlay.style.display = 'flex';
-                        // Update "Processing..." text
                         setTimeout(pollStatus, 2000);
                     {% endif %}
                 }
             } catch (e) {
                 console.error("Poll error", e);
+                // Don't show toast for poll errors to avoid spam, just retry slower
                 setTimeout(pollStatus, 3000);
             }
         };
         
-        // Start polling if we have a job_id but no result yet
         {% if not result and not error %}
             pollStatus();
-            // Also start timer for visual feedback
-            startTime = Date.now(); // We don't know real start time here easily without passing it, but relative is fine
+            startTime = Date.now();
             timerInterval = setInterval(() => {
                 const seconds = Math.floor((Date.now() - startTime) / 1000);
                 timerDiv.textContent = `处理中... 已耗时: ${seconds}s`;
@@ -602,15 +618,48 @@
         {% endif %}
         {% endif %}
 
-        form.addEventListener('submit', function(e) {
-            // We use normal form submission to /result which redirects to /?job_id=...
-            // So just show overlay until that redirect happens
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            // 1. Client-side Validation
+            const formData = new FormData(form);
+            const url = formData.get('url');
+            if (!url) {
+                showToast('输入错误', '请填写视频网址', 'error');
+                return;
+            }
+
+            // 2. Show loading UI
             overlay.style.display = 'flex';
             startTime = Date.now();
-            timerInterval = setInterval(() => {
-                const seconds = Math.floor((Date.now() - startTime) / 1000);
-                timerDiv.textContent = `提交中... 已耗时: ${seconds}s`;
-            }, 1000);
+            timerDiv.textContent = '正在提交任务...';
+            
+            try {
+                // 3. AJAX Submission
+                const response = await fetch('/result', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.message || `提交失败 (${response.status})`);
+                }
+
+                if (data.status === 'success') {
+                    // Success: Redirect to tracking page
+                    window.location.href = data.redirect_url;
+                } else {
+                    throw new Error(data.message || '未知错误');
+                }
+
+            } catch (error) {
+                // 4. Handle Errors
+                overlay.style.display = 'none';
+                console.error(error);
+                showToast('提交失败', error.message, 'error');
+            }
         });
     </script>
 </body>
